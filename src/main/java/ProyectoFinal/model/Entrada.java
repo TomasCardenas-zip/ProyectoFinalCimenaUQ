@@ -1,19 +1,26 @@
 package ProyectoFinal.model;
 
-public class Entrada extends ItemComprable{
-    private String codigoAsiento;
+public class Entrada extends ItemComprable {
+    private final Funcion funcion;
+    private final AsientoFuncion asientoFuncion;
 
-    public Entrada(String id, String nombre, double precioBase, String codigoAsiento) {
-        super(id, nombre, precioBase);
-        this.codigoAsiento = codigoAsiento;
+    public Entrada(String id, String nombre, double precio, Funcion funcion, AsientoFuncion asientoFuncion) {
+        super(id, nombre, precio);
+        this.funcion = funcion;
+        this.asientoFuncion = asientoFuncion;
     }
 
     @Override
     public double getPrecioFinal() {
-        return precioBase;
+        return getPrecioBase();
     }
 
-    public String getCodigoAsiento() { return codigoAsiento; }
-    public void setCodigoAsiento(String codigoAsiento) { this.codigoAsiento = codigoAsiento; }
+    public Funcion getFuncion() {
+        return funcion;
+    }
+
+    public AsientoFuncion getAsientoFuncion() {
+        return asientoFuncion;
+    }
 }
 

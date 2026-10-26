@@ -11,6 +11,10 @@ public class AsientoFuncion {
         this.estado = asiento.isEsAccesible() ? EstadoAsiento.ACCESIBLE : EstadoAsiento.DISPONIBLE;
     }
 
+    public boolean isOcupado() {
+        return this.estado == EstadoAsiento.OCUPADO;
+    }
+
     public Asiento getAsiento() { return asiento; }
     public EstadoAsiento getEstado() { return estado; }
     public void setEstado(EstadoAsiento estado) { this.estado = estado; }

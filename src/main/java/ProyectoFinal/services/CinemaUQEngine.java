@@ -1,31 +1,30 @@
 package ProyectoFinal.services;
 
+import ProyectoFinal.exception.SaldoInsuficienteException;
 import ProyectoFinal.model.*;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CinemaUQEngine {
+
     private static CinemaUQEngine instancia;
 
-    private final List<Cliente> clientes;
-    private final List<Administrador> administradores;
-    private final List<Pelicula> peliculas;
-    private final List<Sala> salas;
-    private final List<Funcion> funciones;
-    private final List<Compra> compras;
+    // Listas en memoria
+    private final List<Persona> personas = new ArrayList<>();
+    private final List<Cliente> clientes = new ArrayList<>();
+    private final List<Funcion> funciones = new ArrayList<>();
+    private final List<Compra> compras = new ArrayList<>();
 
-    private Persona usuarioAutenticado;
+    // Servicios especializados
+    private final AutenticacionService autenticacionService;
+    private final ReservaService reservaService;
+    private final PagoService pagoService;
 
     private CinemaUQEngine() {
-        this.clientes = new ArrayList<>();
-        this.administradores = new ArrayList<>();
-        this.peliculas = new ArrayList<>();
-        this.salas = new ArrayList<>();
-        this.funciones = new ArrayList<>();
-        this.compras = new ArrayList<>();
-
+        this.autenticacionService = new AutenticacionService();
+        this.reservaService = new ReservaService();
+        this.pagoService = new PagoService();
         cargarDatosSemilla();
     }
 
@@ -37,31 +36,49 @@ public class CinemaUQEngine {
     }
 
     private void cargarDatosSemilla() {
-        Administrador admin = new Administrador("ADM01", "Admin General", "admin@cinemauq.com", "3000000000", "EMP-101");
-        administradores.add(admin);
-
-        Cliente cliente = new Cliente("CLI01", "Juan Perez", "juan@gmail.com", "3111111111", "TV-1001");
-        cliente.getTarjetaVirtual().recargar(50000.0);
-        clientes.add(cliente);
-
-        Pelicula pelicula = new Pelicula("PEL01", "Avatar 3", 190, "Ciencia Ficcion");
-        peliculas.add(pelicula);
-
-        Sala sala = new Sala("SALA-1", 5, 6);
-        salas.add(sala);
-
-        Funcion funcion = new Funcion("FUN01", pelicula, sala, LocalDateTime.now().plusDays(1), 15000.0);
-        funciones.add(funcion);
+        // Inicialización de salas, películas, funciones y usuarios de prueba
     }
 
+    // Delegaciones a AutenticacionService
+    public boolean autenticarUsuario(String correo) {
+        return autenticacionService.autenticarUsuario(personas, correo);
+    }
+
+    public Persona getUsuarioAutenticado() {
+        return autenticacionService.getUsuarioAutenticado();
+    }
+
+    public void cerrarSesion() {
+        autenticacionService.cerrarSesion();
+    }
+
+    // Delegaciones a PagoService
+    public void procesarCompra(Compra compra) throws SaldoInsuficienteException {
+        pagoService.procesarCompra(compra);
+        compras.add(compra);
+    }
+
+    public boolean cancelarYReembolsarCompra(String idCompra) {
+        Compra compra = compras.stream()
+                .filter(c -> c.getIdCompra().equalsIgnoreCase(idCompra))
+                .findFirst()
+                .orElse(null);
+
+        if (compra != null && compra.getEstado() == ProyectoFinal.model.enums.EstadoCompra.CONFIRMADA) {
+            compra.getCliente().getTarjetaVirtual().recargar(compra.getTotal());
+            compra.setEstado(ProyectoFinal.model.enums.EstadoCompra.CANCELADA);
+            return true;
+        }
+        return false;
+    }
+
+    // Getters de colecciones
+    public List<Persona> getPersonas() { return personas; }
     public List<Cliente> getClientes() { return clientes; }
-    public List<Administrador> getAdministradores() { return administradores; }
-    public List<Pelicula> getPeliculas() { return peliculas; }
-    public List<Sala> getSalas() { return salas; }
     public List<Funcion> getFunciones() { return funciones; }
     public List<Compra> getCompras() { return compras; }
 
-    public Persona getUsuarioAutenticado() { return usuarioAutenticado; }
-    public void setUsuarioAutenticado(Persona usuario) { this.usuarioAutenticado = usuario; }
-    public void cerrarSesion() { this.usuarioAutenticado = null; }
+    public AutenticacionService getAutenticacionService() { return autenticacionService; }
+    public ReservaService getReservaService() { return reservaService; }
+    public PagoService getPagoService() { return pagoService; }
 }
