@@ -1,19 +1,43 @@
 package ProyectoFinal.model;
 
-public class ComboConfiteria extends ItemComprable{
-    private double porcentajeDescuento;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class ComboConfiteria extends ItemComprable {
+
+    private final List<ItemComprable> items = new ArrayList<>();
+    private final double porcentajeDescuento;
 
     public ComboConfiteria(String id, String nombre, double precioBase, double porcentajeDescuento) {
         super(id, nombre, precioBase);
-        this.porcentajeDescuento = porcentajeDescuento;
+        this.porcentajeDescuento = Math.max(0, Math.min(100, porcentajeDescuento));
+    }
+
+    // Métodos del patrón Composite para gestionar elementos hijos
+    public void agregarItem(ItemComprable item) {
+        if (item != null) {
+            this.items.add(item);
+        }
+    }
+
+    public void removerItem(ItemComprable item) {
+        this.items.remove(item);
+    }
+
+    public List<ItemComprable> getItems() {
+        return Collections.unmodifiableList(items);
+    }
+
+    public double getPorcentajeDescuento() {
+        return porcentajeDescuento;
     }
 
     @Override
-    public double getPrecioFinal() {
-        return precioBase * (1.0 - (porcentajeDescuento / 100.0));
+    public double getPrecioTotal() {
+        // Si el combo contiene elementos dinámicos, suma sus precios y aplica el descuento.
+        // De lo contrario, calcula el descuento sobre el precio base.
+        double subtotal = items.isEmpty() ? getPrecioBase() : items.stream().mapToDouble(ItemComprable::getPrecioTotal).sum();
+        return subtotal * (1.0 - (porcentajeDescuento / 100.0));
     }
-
-    public double getPorcentajeDescuento() { return porcentajeDescuento; }
-    public void setPorcentajeDescuento(double porcentajeDescuento) {
-        this.porcentajeDescuento = porcentajeDescuento; }
 }
