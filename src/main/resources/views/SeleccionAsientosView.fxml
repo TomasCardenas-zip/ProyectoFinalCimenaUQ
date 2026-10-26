@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="20.0" prefHeight="500.0" prefWidth="650.0"
+      style="-fx-background-color: #1a1a2e; -fx-padding: 20;"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ProyectoFinal.controllers.SeleccionAsientosController">
+
+    <children>
+        <Label text="Selección de Asientos" textFill="#e94560">
+            <font>
+                <Font name="System Bold" size="22.0" />
+            </font>
+        </Label>
+
+        <!-- Información de la película seleccionada -->
+        <Label fx:id="lblPeliculaInfo" text="Película: - | Precio: $0.0" textFill="WHITE">
+            <font>
+                <Font size="14.0" />
+            </font>
+        </Label>
+
+        <!-- Grilla dinámica de asientos -->
+        <GridPane fx:id="gridAsientos" alignment="CENTER" hgap="10.0" vgap="10.0"
+                  style="-fx-background-color: #0f3460; -fx-padding: 15; -fx-background-radius: 8;" />
+
+        <Button text="Confirmar Compra" onAction="#handleConfirmarCompra"
+                style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14px; -fx-cursor: hand;" />
+    </children>
+</VBox>

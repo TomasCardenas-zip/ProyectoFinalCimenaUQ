@@ -12,8 +12,8 @@ public class AsientoVipDecorator extends EntradaDecorator {
     }
 
     @Override
-    public double getPrecioTotal() {
-        return itemDecorado.getPrecioTotal() + recargoVip;
+    public double getPrecioFinal() {
+        return itemDecorado.getPrecioFinal() + recargoVip;
     }
 
     @Override

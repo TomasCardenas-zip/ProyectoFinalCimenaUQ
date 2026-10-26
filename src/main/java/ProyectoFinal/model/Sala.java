@@ -30,4 +30,7 @@ public class Sala {
     public int getFilas() { return filas; }
     public int getColumnas() { return columnas; }
     public List<Asiento> getAsientos() { return asientos; }
+    public String getId() {
+        return String.valueOf(this.numeroSala);
+    }
 }

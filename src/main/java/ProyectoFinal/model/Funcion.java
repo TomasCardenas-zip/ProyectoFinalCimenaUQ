@@ -56,4 +56,12 @@ public class Funcion {
     public LocalDateTime getFechaHora() { return fechaHora; }
     public double getPrecioEntrada() { return precioEntrada; }
     public List<AsientoFuncion> getAsientosFuncion() { return asientosFuncion; }
+
+    @Override
+    public String toString() {
+        String titulo = (pelicula != null) ? pelicula.getTitulo() : "Sin título";
+        String genero = (pelicula != null) ? pelicula.getGenero() : "General";
+        String nombreSala = (sala != null) ? sala.getId() : "Sala N/A";
+        return titulo + " [" + genero + "] - $" + precioEntrada + " (" + nombreSala + ")";
+    }
 }

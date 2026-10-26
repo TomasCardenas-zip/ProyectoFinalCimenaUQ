@@ -12,8 +12,8 @@ public class Gafas3DDecorator extends EntradaDecorator {
     }
 
     @Override
-    public double getPrecioTotal() {
-        return itemDecorado.getPrecioTotal() + precioGafas;
+    public double getPrecioFinal() {
+        return itemDecorado.getPrecioFinal() + precioGafas;
     }
 
     @Override

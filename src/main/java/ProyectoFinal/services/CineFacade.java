@@ -1,31 +1,16 @@
 package ProyectoFinal.services;
 
-import ProyectoFinal.exception.*;
+import ProyectoFinal.exception.CinemaUQException;
 import ProyectoFinal.model.*;
-import ProyectoFinal.model.enums.EstadoAsiento;
-import ProyectoFinal.patterns.IPasarelaPago;
-import ProyectoFinal.patterns.PasarelaPagoAdapter;
-
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CineFacade {
 
     private static CineFacade instancia;
-
     private final CinemaUQEngine engine;
-    private final AutenticacionService autenticacionService;
-    private final ReservaService reservaService;
-    private final PagoService pagoService;
-    private final IPasarelaPago pasarelaPago;
 
     private CineFacade() {
         this.engine = CinemaUQEngine.getInstancia();
-        this.autenticacionService = engine.getAutenticacionService();
-        this.reservaService = engine.getReservaService();
-        this.pagoService = engine.getPagoService();
-        // Usamos el adaptador para integrarnos con la pasarela bancaria externa
-        this.pasarelaPago = new PasarelaPagoAdapter();
     }
 
     public static synchronized CineFacade getInstancia() {
@@ -35,130 +20,61 @@ public class CineFacade {
         return instancia;
     }
 
-    // ==========================================
-    // MÓDULO DE AUTENTICACIÓN
-    // ==========================================
-
     public boolean autenticar(String correo) {
-        return autenticacionService.autenticarUsuario(engine.getPersonas(), correo);
+        return engine.autenticarUsuario(correo);
     }
 
     public Persona getUsuarioAutenticado() {
-        return autenticacionService.getUsuarioAutenticado();
+        return engine.getUsuarioAutenticado();
     }
 
     public void cerrarSesion() {
-        autenticacionService.cerrarSesion();
+        engine.cerrarSesion();
     }
-
-    // ==========================================
-    // MÓDULO DE CARTELERA Y RESERVAS
-    // ==========================================
 
     public List<Funcion> getFuncionesDisponibles() {
         return engine.getFunciones();
     }
 
-    public Funcion buscarFuncionPorId(String idFuncion) {
-        return reservaService.buscarFuncionPorId(engine.getFunciones(), idFuncion);
+    public List<ProductoConfiteria> getProductosConfiteria() {
+        return engine.getProductosConfiteria();
     }
 
-    public void validarAsientosDisponibles(List<AsientoFuncion> asientos) throws AsientoOcupadoException, ReservaInvalidaException {
-        if (asientos == null || asientos.isEmpty()) {
-            throw new ReservaInvalidaException("Debe seleccionar al menos un asiento para continuar.");
-        }
-
-        if (asientos.size() > 8) {
-            throw new ReservaInvalidaException("Regla RN-010: No puede adquirir más de 8 asientos en una única compra.");
-        }
-
-        for (AsientoFuncion af : asientos) {
-            if (af.isOcupado() || af.getEstado() == EstadoAsiento.OCUPADO) {
-                throw new AsientoOcupadoException("El asiento " + af.getAsiento().getCodigo() + " ya se encuentra ocupado.");
-            }
-        }
-    }
-
-    // ==========================================
-    // MÓDULO DE PROCESAMIENTO DE COMPRA (FACHADA)
-    // ==========================================
-
-    public Compra realizarCompraGlobal(Cliente cliente, Funcion funcion, List<AsientoFuncion> asientosSeleccionados, List<ItemComprable> confiteriaYAdiciones)
-            throws CinemaUQException {
-
+    public Compra realizarCompraGlobal(Cliente cliente, Funcion funcion, List<AsientoFuncion> asientos, List<ProductoConfiteria> snacks) throws CinemaUQException {
         if (cliente == null) {
-            throw new ReservaInvalidaException("Se requiere un cliente válido para procesar la compra.");
+            throw new CinemaUQException("Debe haber un cliente autenticado para realizar la compra.");
+        }
+        if (asientos == null || asientos.isEmpty()) {
+            throw new CinemaUQException("Debe seleccionar al menos un asiento.");
         }
 
-        // 1. Validar disponibilidad de los asientos
-        validarAsientosDisponibles(asientosSeleccionados);
+        double totalEntradas = asientos.size() * funcion.getPrecioEntrada();
+        double totalSnacks = 0.0;
 
-        // 2. Construir la compra mediante CompraBuilder
-        CompraBuilder builder = new CompraBuilder();
-        builder.setCliente(cliente);
-
-        // Crear entradas a través de la fábrica / entradas decoradas e incluirlas
-        for (AsientoFuncion af : asientosSeleccionados) {
-            Entrada entrada = new Entrada("ENT-" + System.currentTimeMillis() + "-" + af.getAsiento().getCodigo(), funcion, af);
-            builder.agregarItem(entrada);
+        if (snacks != null) {
+            totalSnacks = snacks.stream().mapToDouble(ProductoConfiteria::getPrecio).sum();
         }
 
-        // Agregar ítems de confitería o combos (Composite) o adiciones (Decorator)
-        if (confiteriaYAdiciones != null) {
-            for (ItemComprable item : confiteriaYAdiciones) {
-                builder.agregarItem(item);
-            }
+        double totalGeneral = totalEntradas + totalSnacks;
+
+        if (cliente.getTarjetaVirtual().getSaldo() < totalGeneral) {
+            throw new CinemaUQException("Saldo insuficiente en Tarjeta Virtual. Requiere $" + totalGeneral + " pero posee $" + cliente.getTarjetaVirtual().getSaldo());
         }
 
-        Compra compra = builder.build();
+        cliente.getTarjetaVirtual().descontar(totalGeneral);
+        int puntosGanados = (int) (totalGeneral / 1000 * 10);
+        cliente.getRegistroPuntos().acumularPuntos(puntosGanados);
 
-        // 3. Validar cobro bancario vía PasarelaPagoAdapter y descontar del saldo de la tarjeta virtual
-        pasarelaPago.cobrar(cliente.getTarjetaVirtual().getNumeroTarjeta(), compra.getTotal());
-        pagoService.procesarCompra(compra);
+        Compra compra = new Compra.CompraBuilder()
+                .setId("CMP-" + System.currentTimeMillis())
+                .setCliente(cliente)
+                .setFuncion(funcion)
+                .setAsientos(asientos)
+                .setProductosConfiteria(snacks)
+                .setTotal(totalGeneral)
+                .build();
 
-        // 4. Marcar asientos como ocupados en la función
-        for (AsientoFuncion af : asientosSeleccionados) {
-            reservaService.ocuparAsiento(af);
-        }
-
-        // 5. Acumular puntos de lealtad (RN-009: 10 puntos por cada $1.000)
-        if (cliente.getRegistroPuntos() != null) {
-            cliente.getRegistroPuntos().acumularPuntos(compra.getTotal());
-        }
-
-        // 6. Registrar en el historial global
-        engine.getCompras().add(compra);
-
+        cliente.getHistorialCompras().add(compra);
         return compra;
-    }
-
-    // ==========================================
-    // MÓDULO FINANCIERO Y REEMBOLSOS
-    // ==========================================
-
-    public void recargarSaldoTarjeta(Cliente cliente, double monto) throws TarjetaInactivaException {
-        if (cliente == null || cliente.getTarjetaVirtual() == null) {
-            throw new IllegalArgumentException("El cliente no posee una tarjeta virtual asignada.");
-        }
-        if (!cliente.getTarjetaVirtual().isActiva()) {
-            throw new TarjetaInactivaException("No se puede recargar. La tarjeta virtual se encuentra inactiva.");
-        }
-        cliente.getTarjetaVirtual().recargar(monto);
-    }
-
-    public boolean cancelarYReembolsarCompra(String idCompra) {
-        return engine.cancelarYReembolsarCompra(idCompra);
-    }
-
-    public List<Compra> getHistorialComprasCliente(Cliente cliente) {
-        if (cliente == null) return List.of();
-        return engine.getCompras().stream()
-                .filter(c -> c.getCliente().getId().equalsIgnoreCase(cliente.getId()))
-                .collect(Collectors.toList());
-    }
-
-    // Getters de soporte para controladores
-    public CinemaUQEngine getEngine() {
-        return engine;
     }
 }

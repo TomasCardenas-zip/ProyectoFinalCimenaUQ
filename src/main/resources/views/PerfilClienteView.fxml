@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.Font?>
+
+<VBox alignment="CENTER" spacing="15.0" prefHeight="530.0" prefWidth="600.0"
+      style="-fx-background-color: #1a1a2e; -fx-padding: 20;"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="ProyectoFinal.controllers.PerfilClienteController">
+
+    <children>
+        <Label text="Mi Perfil &amp; Tarjeta Virtual CinemaUQ" textFill="#e94560">
+            <font>
+                <Font name="System Bold" size="20.0" />
+            </font>
+        </Label>
+
+        <VBox spacing="5.0" style="-fx-background-color: #0f3460; -fx-padding: 15; -fx-background-radius: 8;">
+            <Label fx:id="lblNombre" text="Cliente: -" textFill="WHITE" />
+            <Label fx:id="lblCorreo" text="Correo: -" textFill="WHITE" />
+            <Label fx:id="lblSaldo" text="Saldo Tarjeta Virtual: $0.0" textFill="#00fff5">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+            <Label fx:id="lblPuntos" text="Puntos Fidelidad Acumulados: 0 pts" textFill="#ffbd69">
+                <font>
+                    <Font name="System Bold" size="14.0" />
+                </font>
+            </Label>
+        </VBox>
+
+        <Button text="+ Recargar $50.000 a Tarjeta Virtual" onAction="#handleRecargarTarjeta"
+                style="-fx-background-color: #2e7d32; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
+
+        <Label text="Historial de Compras Realizadas" textFill="WHITE">
+            <font>
+                <Font name="System Bold" size="14.0" />
+            </font>
+        </Label>
+
+        <ListView fx:id="listHistorial" prefHeight="140.0" prefWidth="540.0"
+                  style="-fx-background-color: #0f3460; -fx-control-inner-background: #0f3460;" />
+
+        <HBox alignment="CENTER" spacing="15.0">
+            <Button text="Volver a Cartelera" onAction="#handleVolverCartelera"
+                    style="-fx-background-color: #0f3460; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
+            <Button text="Cerrar Sesión" onAction="#handleCerrarSesion"
+                    style="-fx-background-color: #e94560; -fx-text-fill: white; -fx-font-weight: bold; -fx-cursor: hand;" />
+        </HBox>
+    </children>
+</VBox>

@@ -14,7 +14,6 @@ public class ComboConfiteria extends ItemComprable {
         this.porcentajeDescuento = Math.max(0, Math.min(100, porcentajeDescuento));
     }
 
-    // Métodos del patrón Composite para gestionar elementos hijos
     public void agregarItem(ItemComprable item) {
         if (item != null) {
             this.items.add(item);
@@ -34,10 +33,8 @@ public class ComboConfiteria extends ItemComprable {
     }
 
     @Override
-    public double getPrecioTotal() {
-        // Si el combo contiene elementos dinámicos, suma sus precios y aplica el descuento.
-        // De lo contrario, calcula el descuento sobre el precio base.
-        double subtotal = items.isEmpty() ? getPrecioBase() : items.stream().mapToDouble(ItemComprable::getPrecioTotal).sum();
+    public double getPrecioFinal() {
+        double subtotal = items.isEmpty() ? getPrecioBase() : items.stream().mapToDouble(ItemComprable::getPrecioFinal).sum();
         return subtotal * (1.0 - (porcentajeDescuento / 100.0));
     }
 }
